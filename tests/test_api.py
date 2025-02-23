@@ -36,3 +36,37 @@ async def test_get_one_page():
     assert "sent_by" in first_item
     assert "published" in first_item
     assert "comments" in first_item
+
+@pytest.mark.asyncio
+async def test_get_two_pages():
+    """
+    Check that the endpoint /2 returns exactly 60 news items.
+    """
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.get("/2")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 60
+
+@pytest.mark.asyncio
+async def test_get_three_pages():
+    """
+    Check that the endpoint /3 returns exactly 90 news items.
+    """
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.get("/3")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 90
+
+    first_item = data[0]
+    assert "title" in first_item
+    assert "points" in first_item
+    assert "sent_by" in first_item
+    assert "published" in first_item
+    assert "comments" in first_item
