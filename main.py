@@ -1,16 +1,35 @@
-# This is a sample Python script.
+from fastapi import FastAPI
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+app = FastAPI()
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+# Memory cache to store results for each page (to be implemented later)
+cached_pages = {}
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('hola!')
+@app.get("/")
+async def root():
+    """
+    The root endpoint ("/") behaves the same as "/1".
+    It returns the news from page 1.
+    """
+    return await get_news(1)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+@app.get("/{page_count}")
+async def get_news(page_count: int):
+    """
+    Returns 'page_count' * 30 news items.
+    For now, we generate dummy data so the tests pass.
+    """
+    #Dummy news object with the expected structure
+    dummy_news = {
+        "title": "title",
+        "points": 0,
+        "sent_by": "fake author",
+        "published": "just now",
+        "comments": 0
+    }
+
+    news_list = [dummy_news.copy() for _ in range(page_count * 30)]
+
+    return news_list
