@@ -74,3 +74,28 @@ async def test_get_three_pages():
     assert "published" in first_item
     assert "comments" in first_item
 
+@pytest.mark.asyncio
+async def test_cache_mechanism():
+   """
+   Verify that:
+   - The first call to /1 should fetch and cache page 1.
+   - The next call to /2 should fetch only page 2 (since page 1 is cached).
+   """
+   # Clear the cache to ensure a fresh start.
+   cached_pages.clear()
+
+   with patch("main.fetch_page") as mock_fetch:
+       # Simulate fetch_page returning 30 fake items per page.
+       mock_fetch.side_effect = lambda page: [f"fake_data_page_{page}"] * 30
+
+       transport = ASGITransport(app=app)
+       async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
+           # Call /1: page 1 should be downloaded and cached.
+           await ac.get("/1")
+           # Call /2: page 1 is already cached, so only page 2 should be downloaded.
+           await ac.get("/2")
+
+   # Extract the arguments used in fetch_page calls.
+   pages_called = [call.args[0] for call in mock_fetch.call_args_list]
+   assert pages_called == [1, 2], f"Unexpected fetch_page calls: expected [1, 2], but got {pages_called}"
+
