@@ -1,8 +1,11 @@
+# tests/test_api.py
 
 import pytest
 import httpx
 from httpx import ASGITransport
-from main import app
+from main import app, cached_pages
+
+from unittest.mock import patch
 
 
 @pytest.mark.asyncio
@@ -70,3 +73,4 @@ async def test_get_three_pages():
     assert "sent_by" in first_item
     assert "published" in first_item
     assert "comments" in first_item
+
