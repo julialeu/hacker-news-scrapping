@@ -57,7 +57,10 @@ async def fetch_page(page_number: int):
     stories = soup.find_all("tr", class_="athing")
 
     for story in stories:
-        title_tag = story.find("a", class_="storylink")
+        title_tag = story.find("a", class_="titlelink")
+        if not title_tag:
+            title_tag = story.select_one("span.titleline a")
+
         title = title_tag.get_text(strip=True) if title_tag else "No title"
 
         # The subtext (points, author, time, comments) is in the next <tr>.

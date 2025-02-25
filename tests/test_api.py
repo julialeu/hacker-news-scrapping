@@ -4,26 +4,21 @@ import pytest
 import httpx
 from httpx import ASGITransport
 from main import app, cached_pages
-
 from unittest.mock import patch
-
 
 @pytest.mark.asyncio
 async def test_get_one_page():
     """
     Check that the endpoint /1 returns exactly 30 news items.
     """
-    # Create an ASGI transport that wraps our FastAPI app.
+    # Create an ASGI transport that wraps the FastAPI app.
     transport = ASGITransport(app=app)
 
     # Use this transport in an AsyncClient to make requests.
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get("/1")  # Send a GET request to the /1 endpoint.
 
-    # Make sure the response status code is 200 (OK).
     assert response.status_code == 200
-
-    # Convert the response to JSON format.
     data = response.json()
 
     # Check that the response is a list.
@@ -90,12 +85,11 @@ async def test_cache_mechanism():
 
        transport = ASGITransport(app=app)
        async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-           # Call /1: page 1 should be downloaded and cached.
+           # Call /1
            await ac.get("/1")
-           # Call /2: page 1 is already cached, so only page 2 should be downloaded.
+           # Call /2
            await ac.get("/2")
 
    # Extract the arguments used in fetch_page calls.
    pages_called = [call.args[0] for call in mock_fetch.call_args_list]
    assert pages_called == [1, 2], f"Unexpected fetch_page calls: expected [1, 2], but got {pages_called}"
-
