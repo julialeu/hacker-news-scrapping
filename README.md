@@ -59,7 +59,17 @@ docker compose down
 10. Caching Mechanism
 The get_news function implements a straightforward in-memory cache (cached_pages) to keep track of data for each page. This approach helps avoid the need to download and parse the same page repeatedly.
 
-11. Parsing Hacker News
+11. Asynchronous Concurrency
+The API now incorporates asyncio.gather in the get_news endpoint for parallel fetching of pages. The difference guarantees that multiple pages are scraped concurrently instead of one after the other, improving response times overall.
+For instance, to demonstrate the concurrent behavior, you can implement a delay inside the fetch_page method:
+async def fetch_page(page_number: int):
+    await asyncio.sleep(1) 
+
+Then run ----> curl -w "Total Time: %{time_total}s\n" -o /dev/null -s http://localhost:3000/2
+
+Concurrent page fetch should take approximately 1 second overall, as opposed to 2 seconds (sequential page fetching).
+
+12. Parsing Hacker News
 The fetch_page function retrieves a Hacker News page and utilizes BeautifulSoup to extract the following information:
 
 - Title (using the selector span.titleline a)

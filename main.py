@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 import httpx
 from bs4 import BeautifulSoup
+import asyncio
 
 app = FastAPI()
 
@@ -17,7 +18,7 @@ async def root():
     """
     return await get_news(1)
 
-
+'''
 @app.get("/{page_count}")
 async def get_news(page_count: int):
     """
@@ -39,13 +40,41 @@ async def get_news(page_count: int):
         news_list.extend(page_data)
 
     return news_list
+'''
 
+@app.get("/{page_count}")
+async def get_news(page_count: int):
+    """
+    Returns 'page_count' * 30 news items.
+    Now uses asyncio.gather to concurrently fetch pages not in the cache.
+    """
+    page_count = max(1, page_count)
+    news_list = []
+
+    # Verify which pages need to be fetched (let's say those that are not in the cache)
+    pages_to_fetch = [p for p in range(1, page_count + 1) if p not in cached_pages]
+
+    if pages_to_fetch:
+        # Create tasks to fetch the missing pages in parallel
+        tasks = [fetch_page(p) for p in pages_to_fetch]
+        results = await asyncio.gather(*tasks)
+        # Update the cache with the fetched results.
+        for page, data in zip(pages_to_fetch, results):
+            cached_pages[page] = data
+
+    # Gather the results from the cache (both previously fetched and newly obtained)
+    for p in range(1, page_count + 1):
+        news_list.extend(cached_pages[p])
+
+    return news_list
 
 async def fetch_page(page_number: int):
     """
     Fetches the Hacker News page for the given page number,
     parses the HTML, and returns a list of news items with the expected structure.
     """
+
+    # await asyncio.sleep(1)  # ONLY FOR BETTER TESTING!!! ---> Simulate a 1 second delay.
     url = f"https://news.ycombinator.com/news?p={page_number}"
     async with httpx.AsyncClient() as client:
         response = await client.get(url)

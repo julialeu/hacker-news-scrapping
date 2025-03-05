@@ -1,5 +1,7 @@
 # tests/test_api.py
 
+import asyncio
+import time
 import pytest
 import httpx
 from httpx import ASGITransport
@@ -93,3 +95,27 @@ async def test_cache_mechanism():
    # Extract the arguments used in fetch_page calls.
    pages_called = [call.args[0] for call in mock_fetch.call_args_list]
    assert pages_called == [1, 2], f"Unexpected fetch_page calls: expected [1, 2], but got {pages_called}"
+
+@pytest.mark.asyncio
+async def test_async_concurrency():
+    # Ensure a clean start without cache.
+    cached_pages.clear()
+
+    async def delayed_fetch(page: int):
+        # Simulate a 1 sec delay for each call.
+        await asyncio.sleep(1)
+        return [f"fake_data_page_{page}"] * 30
+
+    with patch("main.fetch_page", side_effect=delayed_fetch) as mock_fetch:
+        start_time = time.monotonic()
+        transport = ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
+            # Request 2 pages, which should be executed in parallel
+            response = await ac.get("/2")
+        duration = time.monotonic() - start_time
+
+
+    print(f"Duration: {duration:.2f} seconds")
+
+    # if the program is executed concurrently this message will not be display in the terminal
+    assert duration < 1.5, f"Concurrent execution took too long: {duration} seconds"
