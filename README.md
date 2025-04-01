@@ -1,4 +1,3 @@
-# flanks
 
 This project develops an asynchronous API with FastAPI to scrape news from Hacker News. The API has two major endpoints:
 GET /: As GET /1. It returns 30 news items from page 1.
